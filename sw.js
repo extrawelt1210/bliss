@@ -1,5 +1,5 @@
-const CACHE = 'bliss-1793858363906';
-const PRECACHE = ["./","./index.html","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./assets/index-C5ct8ub5.css","./assets/index-gTw2L0ny.js","./assets/sound-processor-DA5MrrrU.js"];
+const CACHE = 'bliss-1793884138180';
+const PRECACHE = ["./","./index.html","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./assets/index-CUIpejqA.css","./assets/index-N7KynB7w.js","./assets/sound-processor-DA5MrrrU.js"];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
