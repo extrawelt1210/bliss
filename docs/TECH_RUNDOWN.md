@@ -2,7 +2,7 @@
 
 ## Produkt in einem Satz
 
-- Browser-App macht ruhige Klänge.
+- Browser-App macht ruhige Klänge und lokale Reflexion.
 - Alles lokal.
 - Kein Konto.
 - Kein Backend.
@@ -55,7 +55,7 @@
 - Große UI-Schaltzentrale.
 - Hält sichtbaren Zustand.
 - Reicht Nutzeraktionen an `AudioEngine` weiter.
-- Steuert Mixer, Timer, Sitzungen, Favoriten, Makros, Effekte, Drone-Regler und Frequenzwerkzeug.
+- Steuert Mixer, Timer, Sitzungen, Favoriten, Makros, Effekte, Drone-Regler, Frequenzwerkzeug und Reflexionsansicht.
 - Startet Audio nie automatisch.
 - Zentraler Stop bleibt immer erreichbar.
 
@@ -165,6 +165,15 @@
 - Begrenzt freie Eingaben.
 - Stilles Ende ist Standard.
 
+### `src/reflection.ts`
+
+- Eigenständiges lokales Datenmodell für Reflexionsnotizen.
+- Prüft gespeicherte Daten defensiv vor dem Laden.
+- Begrenzt Notizen auf 4.000 Zeichen und die Historie auf 200 Einträge.
+- Speichert Leitfrage, Text, Zeitpunkt und optionalen Belastungswert.
+- Erstellt einen versionierten JSON-Export.
+- Kennt weder Audio-Engine noch KI-Anbieter.
+
 ### `src/sound-catalog.ts`
 
 - Zentrale Liste aller auswählbaren Klänge.
@@ -206,6 +215,8 @@
 - Einstellungen bleiben lokal.
 - Favoriten bleiben lokal.
 - Check-ins bleiben nur im geöffneten React-Zustand.
+- Reflexionsnotizen und freiwillig dazu gespeicherte Belastungswerte bleiben im lokalen Browser-Speicher.
+- Reflexionen werden nie automatisch an einen Dienst übertragen.
 - Kein Login.
 - Keine Cloud-Synchronisation.
 - Keine Telemetrie.
@@ -225,8 +236,9 @@
 - Frequenzwerkzeug: logarithmische Abbildung, Grenzen, Notch-Routing, expliziter Start und Cleanup.
 - UI: Nutzeraktionen, zentrale Stop-Taste und Fehlerfälle.
 - Speicher: aktuelles Schema und absichtlich abgewiesene Altdaten.
+- Reflexion: Speichern, Datenvalidierung, Speicherfehler, UI-Ablauf und bestätigte Löschung.
 - PWA: Service-Worker-Registrierung.
-- Testzahl wird beim nächsten vollständigen lokalen Lauf aktualisiert.
+- 129 automatisierte Tests im vollständigen lokalen Lauf.
 
 ## Build und Betrieb
 
@@ -251,5 +263,6 @@
 - CPU-Stabilität langer Sessions muss am Gerät geprüft werden.
 - Klangurteil bleibt Hörtest.
 - Subjektive Frequenzzuordnung und Hochfrequenzwiedergabe bleiben Geräte- und Hörtest.
-- Reflexionsassistent bleibt separates Projekt.
+- Kein KI-Dialog in Integrationsphase 1.
+- Der vorhandene Python-Assistent bleibt ein separates, unverändertes Projekt.
 

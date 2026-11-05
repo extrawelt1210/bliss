@@ -23,7 +23,10 @@ const createEngine = (): AudioEngine => ({
   dispose: vi.fn().mockResolvedValue(undefined),
 })
 
-const openView = async (user: ReturnType<typeof userEvent.setup>, name: 'Klänge' | 'Formen' | 'Sitzung' | 'Favoriten') => {
+const openView = async (
+  user: ReturnType<typeof userEvent.setup>,
+  name: 'Klänge' | 'Formen' | 'Reflexion' | 'Sitzung' | 'Favoriten',
+) => {
   await user.click(screen.getByRole('button', { name }))
 }
 
@@ -146,6 +149,48 @@ describe('Bliss Bedienoberfläche', () => {
     await user.click(voluntary[0])
     expect(screen.getByRole('slider', { name: /Belastung vorher von 0 bis 10/ })).toHaveValue('5')
     expect(screen.getByText(/bleiben nur in dieser geöffneten Seite/)).toBeInTheDocument()
+  })
+
+  it('speichert eine geführte Reflexion ausschließlich lokal', async () => {
+    const user = userEvent.setup()
+    const engine = createEngine()
+    render(<App engine={engine} />)
+
+    await openView(user, 'Reflexion')
+    await user.click(screen.getByRole('radio', { name: 'Was würde dir für die nächste kleine Weile guttun?' }))
+    await user.click(screen.getByRole('button', { name: 'Freiwillig eintragen' }))
+    fireEvent.change(screen.getByRole('slider', { name: 'Belastung gerade von 0 bis 10' }), {
+      target: { value: '6' },
+    })
+    await user.type(screen.getByLabelText('Deine Notiz'), 'Ein paar Minuten ohne neue Aufgaben.')
+    await user.click(screen.getByRole('button', { name: 'Notiz lokal speichern' }))
+
+    expect(screen.getByText('Ein paar Minuten ohne neue Aufgaben.')).toBeInTheDocument()
+    expect(screen.getByText('Belastung 6 / 10')).toBeInTheDocument()
+    expect(localStorage.getItem('bliss-reflections-v1')).toContain('ohne neue Aufgaben')
+    expect(engine.start).not.toHaveBeenCalled()
+  })
+
+  it('löscht eine Reflexion erst nach Bestätigung', async () => {
+    localStorage.setItem('bliss-reflections-v1', JSON.stringify([{
+      id: 'local-entry',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      promptId: 'open',
+      prompt: 'Freie Notiz',
+      text: 'Bleibt bis zur Bestätigung.',
+      strain: null,
+    }]))
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+    const user = userEvent.setup()
+    render(<App engine={createEngine()} />)
+
+    await openView(user, 'Reflexion')
+    const remove = screen.getByRole('button', { name: /Notiz vom .* löschen/ })
+    await user.click(remove)
+    expect(screen.getByText('Bleibt bis zur Bestätigung.')).toBeInTheDocument()
+    await user.click(remove)
+    expect(screen.queryByText('Bleibt bis zur Bestätigung.')).not.toBeInTheDocument()
+    expect(confirm).toHaveBeenCalledTimes(2)
   })
 
   it('speichert und entfernt Favoriten ausschließlich lokal', async () => {

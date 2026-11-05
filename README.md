@@ -1,6 +1,6 @@
 # Bliss
 
-Bliss ist eine private, deutschsprachige Web-App für sanfte Klangbereicherung. Rauschen, Klangwelten und binaurale Sinustöne entstehen vollständig lokal im Browser – ohne Konto, Cloud, Tracking, Audio-Samples oder externes Audio-Streaming.
+Bliss ist eine private, deutschsprachige Web-App für sanfte Klangbereicherung und freiwillige Reflexion. Klänge und persönliche Notizen bleiben lokal im Browser – ohne Konto, Cloud, Tracking, Audio-Samples oder externes Audio-Streaming.
 
 > Bliss ist kein Medizinprodukt und ersetzt keine ärztliche Abklärung. Klänge angenehm leise einstellen und Tinnitus nicht aggressiv überdecken.
 
@@ -21,6 +21,7 @@ Bliss ist eine private, deutschsprachige Web-App für sanfte Klangbereicherung. 
 - lokale Favoriten mit Namen, Sortierung, Kopien, drei Schnellplätzen und JSON-Import/-Export
 - Wiederherstellung und Direktstart der letzten Mischung sowie ein reduzierter Kompaktmodus
 - freiwillige, nur sitzungsbezogene Check-ins
+- lokales Reflexionsjournal mit ruhigen Leitfragen, optionalem Belastungswert, bestätigter Löschung und JSON-Export
 - installierbare Offline-PWA mit lokalen App-Symbolen
 - bewusster Pausenzustand nach erkannten Audio-Unterbrechungen
 
@@ -77,7 +78,7 @@ Der optionale **Frequenzvergleich** wird ausschließlich per Tastendruck gestart
 
 Beim **warmen Drone** formen acht leise Teiloszillatoren einen tiefen Akkord. Ein langsamer LFO moduliert Filter und minimale Tonhöhendrift. Das eigene Multimode-Filter bietet einen direkten LP/BP/HP-Workflow; Cutoff, Resonanz, Tempo und Tiefe sind für ruhige Bewegung begrenzt. Es handelt sich nicht um eine Schaltungs- oder Klangemulation bestimmter Hardware. Filter- und LFO-Werte werden im aktuellen lokalen Setup und in neuen Favoriten gespeichert. Das neue Speicherschema übernimmt absichtlich keine älteren Testfavoriten.
 
-Favoriten und die zuletzt eingestellte Mischung werden ausschließlich im lokalen Browser-Speicher abgelegt. Export und Import verwenden eine lokale JSON-Datei; nichts wird hochgeladen. Die freiwilligen Belastungswerte bleiben nur im aktuellen Seitenzustand und werden nicht dauerhaft gespeichert. Es gibt keine verpflichtenden Eingaben.
+Favoriten und die zuletzt eingestellte Mischung werden ausschließlich im lokalen Browser-Speicher abgelegt. Export und Import verwenden eine lokale JSON-Datei; nichts wird hochgeladen. Die sitzungsbezogenen Belastungswerte bleiben nur im aktuellen Seitenzustand. Im Reflexionsbereich wird ein Belastungswert nur dann dauerhaft zusammen mit einer Notiz gespeichert, wenn er freiwillig eingetragen wurde. Reflexionen lassen sich einzeln nach Bestätigung löschen und lokal exportieren. Es gibt keine verpflichtenden Eingaben.
 
 ## Architektur und Audio-Sicherheit
 
@@ -95,4 +96,4 @@ Automatisierte Tests können reale iPhone-Eigenschaften wie Hardware-Lautstärke
 
 ## Datenschutz und Projektgrenzen
 
-Bliss sendet keine Nutzungs-, Gesundheits- oder Audiodaten und enthält keine Telemetrie oder Analytics. Der vorhandene Reflexionsassistent ist nicht Teil dieses Projekts und wurde nicht verändert oder zusammengeführt.
+Bliss sendet keine Nutzungs-, Gesundheits-, Reflexions- oder Audiodaten und enthält keine Telemetrie oder Analytics. Das lokale Reflexionsmodul ist eine unabhängige Neuimplementierung innerhalb der PWA. Der vorhandene Python-Reflexionsassistent wurde nicht verändert, kopiert oder mit seinem Datenbestand zusammengeführt.

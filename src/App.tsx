@@ -48,6 +48,15 @@ import {
   sessionTotalSeconds,
 } from './session-plan'
 import type { SessionPhase, SessionPlan } from './session-plan'
+import {
+  loadReflectionEntries,
+  MAX_REFLECTION_ENTRIES,
+  MAX_REFLECTION_LENGTH,
+  REFLECTION_PROMPTS,
+  saveReflectionEntries,
+  serializeReflectionEntries,
+} from './reflection'
+import type { ReflectionEntry } from './reflection'
 import { SOUND_OPTIONS, soundForKind, soundLabel } from './sound-catalog'
 
 const DEFAULT_MASTER_VOLUME = 18
@@ -56,12 +65,13 @@ const DEFAULT_SECONDARY_VOLUME = 35
 const TIMER_OPTIONS = [0, 5, 10, 20, 30] as const
 const QUICK_SLOTS = [1, 2, 3] as const
 
-type AppView = 'home' | 'sounds' | 'tools' | 'session' | 'favorites'
+type AppView = 'home' | 'sounds' | 'tools' | 'reflection' | 'session' | 'favorites'
 
 const appViews: ReadonlyArray<{ id: AppView; label: string; icon: string }> = [
   { id: 'home', label: 'Heute', icon: '⌂' },
   { id: 'sounds', label: 'Klänge', icon: '≋' },
   { id: 'tools', label: 'Formen', icon: '◌' },
+  { id: 'reflection', label: 'Reflexion', icon: '✎' },
   { id: 'session', label: 'Sitzung', icon: '◷' },
   { id: 'favorites', label: 'Favoriten', icon: '♡' },
 ]
@@ -168,6 +178,7 @@ function CheckInControl({ label, value, onChange }: CheckInControlProps) {
           <span className="sr-only">{label} von 0 bis 10</span>
           <input
             type="range"
+            aria-label={`${label} von 0 bis 10`}
             min="0"
             max="10"
             step="1"
@@ -186,6 +197,11 @@ const formatTimer = (seconds: number) => {
   const minutes = Math.floor(seconds / 60)
   return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
 }
+
+const formatReflectionDate = (createdAt: string) => new Intl.DateTimeFormat('de-DE', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+}).format(new Date(createdAt))
 
 const differenceFor = (sound: Sound | undefined): BinauralDifference =>
   sound?.kind === 'binaural' ? sound.difference : 8
@@ -255,6 +271,12 @@ export function App({ engine: providedEngine }: AppProps) {
   const [lastSetup, setLastSetup] = useState<SavedSetup | null>(initialSetup)
   const [compactMode, setCompactMode] = useState(false)
   const [activeView, setActiveView] = useState<AppView>('home')
+  const [reflectionEntries, setReflectionEntries] = useState<ReflectionEntry[]>(() => loadReflectionEntries())
+  const [reflectionPromptId, setReflectionPromptId] = useState(REFLECTION_PROMPTS[0].id)
+  const [reflectionText, setReflectionText] = useState('')
+  const [reflectionStrain, setReflectionStrain] = useState<number | null>(null)
+  const [reflectionNotice, setReflectionNotice] = useState<string | null>(null)
+  const [reflectionError, setReflectionError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [stopping, setStopping] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -755,6 +777,65 @@ export function App({ engine: providedEngine }: AppProps) {
     }
   }
 
+  const persistReflections = (next: ReflectionEntry[], message?: string) => {
+    if (!saveReflectionEntries(next)) {
+      setReflectionError('Die Notiz konnte auf diesem Gerät nicht gespeichert werden.')
+      return false
+    }
+    setReflectionEntries(next)
+    setReflectionError(null)
+    setReflectionNotice(message ?? null)
+    return true
+  }
+
+  const handleSaveReflection = () => {
+    const text = reflectionText.trim()
+    if (!text) {
+      setReflectionError('Schreibe erst ein paar Worte, bevor du die Notiz speicherst.')
+      return
+    }
+    const prompt = REFLECTION_PROMPTS.find(({ id }) => id === reflectionPromptId) ?? REFLECTION_PROMPTS[0]
+    const entry: ReflectionEntry = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      promptId: prompt.id,
+      prompt: prompt.text,
+      text,
+      strain: reflectionStrain,
+    }
+    if (persistReflections(
+      [entry, ...reflectionEntries].slice(0, MAX_REFLECTION_ENTRIES),
+      'Notiz wurde nur auf diesem Gerät gespeichert.',
+    )) {
+      setReflectionText('')
+      setReflectionStrain(null)
+    }
+  }
+
+  const handleRemoveReflection = (entry: ReflectionEntry) => {
+    if (!window.confirm('Diese lokale Notiz wirklich löschen?')) return
+    persistReflections(
+      reflectionEntries.filter(({ id }) => id !== entry.id),
+      'Notiz wurde gelöscht.',
+    )
+  }
+
+  const handleExportReflections = () => {
+    try {
+      const blob = new Blob([serializeReflectionEntries(reflectionEntries)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'bliss-reflexionen.json'
+      link.click()
+      URL.revokeObjectURL(url)
+      setReflectionError(null)
+      setReflectionNotice('Reflexionen wurden als lokale Datei vorbereitet.')
+    } catch {
+      setReflectionError('Die Exportdatei konnte nicht erstellt werden.')
+    }
+  }
+
   const primaryLabel = playbackState === 'playing'
     ? 'Pausieren'
     : playbackState === 'paused' ? 'Fortsetzen' : 'Starten'
@@ -903,6 +984,17 @@ export function App({ engine: providedEngine }: AppProps) {
                   </button>
                 ))}
               </div>
+            </section>
+
+            <section className="reflection-entrypoint" aria-labelledby="reflection-entrypoint-heading" hidden={activeView !== 'home'}>
+              <div>
+                <p className="section-kicker">Reflexion</p>
+                <h2 id="reflection-entrypoint-heading">Ein paar Worte für dich</h2>
+                <p>Halte fest, was gerade da ist. Ohne Bewertung und ohne dass etwas an die Cloud gesendet wird.</p>
+              </div>
+              <button type="button" className="secondary-action" onClick={() => setActiveView('reflection')}>
+                Reflexion öffnen
+              </button>
             </section>
 
             <section className="sound-card" aria-labelledby="sound-heading" hidden={!['sounds', 'tools', 'session'].includes(activeView)}>
@@ -1310,6 +1402,116 @@ export function App({ engine: providedEngine }: AppProps) {
               {sessionBeforeCheckIn !== null && afterCheckIn !== null && (
                 <p className="check-in-summary">Für diesen Moment: vorher {sessionBeforeCheckIn} · nachher {afterCheckIn}</p>
               )}
+            </section>
+
+            <section className="reflection" aria-labelledby="reflection-heading" hidden={activeView !== 'reflection'}>
+              <header className="reflection__heading">
+                <div>
+                  <p className="section-kicker">Nur auf diesem Gerät</p>
+                  <h1 id="reflection-heading">Reflexion</h1>
+                  <p>Ein stiller Ort für Gedanken. Kein Chat, keine Bewertung, kein Leistungsziel.</p>
+                </div>
+                <span className="local-badge">Lokal &amp; offline</span>
+              </header>
+
+              <div className="reflection-composer">
+                <fieldset className="reflection-prompts">
+                  <legend>Wähle eine sanfte Frage</legend>
+                  <div>
+                    {REFLECTION_PROMPTS.map((prompt) => (
+                      <label className={reflectionPromptId === prompt.id ? 'is-selected' : ''} key={prompt.id}>
+                        <input
+                          className="option-input"
+                          type="radio"
+                          name="reflection-prompt"
+                          value={prompt.id}
+                          checked={reflectionPromptId === prompt.id}
+                          onChange={() => setReflectionPromptId(prompt.id)}
+                        />
+                        <span>{prompt.text}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <CheckInControl
+                  label="Belastung gerade"
+                  value={reflectionStrain}
+                  onChange={setReflectionStrain}
+                />
+
+                <label className="reflection-text" htmlFor="reflection-text">
+                  <span>Deine Notiz</span>
+                  <textarea
+                    id="reflection-text"
+                    aria-label="Deine Notiz"
+                    value={reflectionText}
+                    maxLength={MAX_REFLECTION_LENGTH}
+                    rows={7}
+                    placeholder="Du kannst kurz beginnen …"
+                    onChange={(event) => {
+                      setReflectionText(event.target.value)
+                      setReflectionError(null)
+                      setReflectionNotice(null)
+                    }}
+                  />
+                  <small>{reflectionText.length} / {MAX_REFLECTION_LENGTH} Zeichen</small>
+                </label>
+
+                {(reflectionError || reflectionNotice) && (
+                  <div className={reflectionError ? 'error-message' : 'notice-message'} role={reflectionError ? 'alert' : 'status'}>
+                    {reflectionError ?? reflectionNotice}
+                  </div>
+                )}
+
+                <button type="button" className="primary-action reflection-save" onClick={handleSaveReflection}>
+                  Notiz lokal speichern
+                </button>
+                <p className="privacy-hint">
+                  Der Browser-Speicher ist nicht zusätzlich verschlüsselt. Auf einem gemeinsam genutzten Geräteprofil können andere Personen die Notizen sehen. Bliss ersetzt keine psychotherapeutische oder medizinische Hilfe. Bei akuter Gefahr nutze bitte lokale Notfallhilfe.
+                </p>
+              </div>
+
+              <div className="reflection-history" aria-labelledby="reflection-history-heading">
+                <div className="reflection-history__heading">
+                  <div>
+                    <p className="section-kicker">Dein Rückblick</p>
+                    <h2 id="reflection-history-heading">Gespeicherte Notizen</h2>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-action"
+                    disabled={reflectionEntries.length === 0}
+                    onClick={handleExportReflections}
+                  >
+                    Exportieren
+                  </button>
+                </div>
+                {reflectionEntries.length === 0 ? (
+                  <p className="empty-state">Noch keine Reflexion gespeichert.</p>
+                ) : (
+                  <ol className="reflection-list">
+                    {reflectionEntries.map((entry) => (
+                      <li key={entry.id}>
+                        <div className="reflection-list__meta">
+                          <time dateTime={entry.createdAt}>{formatReflectionDate(entry.createdAt)}</time>
+                          {entry.strain !== null && <span>Belastung {entry.strain} / 10</span>}
+                        </div>
+                        <h3>{entry.prompt}</h3>
+                        <p>{entry.text}</p>
+                        <button
+                          type="button"
+                          className="reflection-delete"
+                          aria-label={`Notiz vom ${formatReflectionDate(entry.createdAt)} löschen`}
+                          onClick={() => handleRemoveReflection(entry)}
+                        >
+                          Löschen
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
             </section>
 
             <section className="favorites" aria-labelledby="favorites-heading" hidden={activeView !== 'favorites'}>

@@ -60,5 +60,12 @@ Die bisherige lange Seite ist in fünf mobile Aufgabenbereiche gegliedert. Eine 
 
 Klangparameter bleiben beim Wechsel zwischen Ansichten aktiv und werden ohne Neustart des AudioContext live übertragen. Ein Quellenwechsel verwendet einen parallelen Crossfade statt einer Fade-out-Lücke. Auch der sehr leise Vergleichston kann über einer laufenden Mischung gestartet werden. Automatisierte Tests prüfen Navigation, Live-Parameter, Crossfade-Routing, Cleanup und den unterbrechungsfreien Tuner-Start. Tatsächliche Touch-Ergonomie, Hardware-Lautstärke, thermische Stabilität und Hörwahrnehmung bleiben auf realen iPhones zu prüfen.
 
-## Später: Reflexionsassistent
-Nur nach Architekturvergleich prüfen, ob Module gemeinsame Design-Komponenten oder lokale Datenmodelle nutzen sollten. Bis dahin strikt getrennte Projekte und Repositories.
+## Phase 10 – gemeinsames Wohlbefinden, Integrationsphase 1 ✓
+
+Bliss besitzt jetzt einen eigenständigen Reflexionsbereich mit fünf ruhigen Leitfragen plus freier Notiz, optionalem Belastungs-Check-in, lokaler Historie, bestätigter Einzellöschung und versioniertem JSON-Export. Alle Inhalte bleiben im Browser-Speicher; es gibt weiterhin kein Konto, Backend, Sprachmodell oder Cloud-Synchronisation.
+
+Das Modul nutzt die gemeinsame mobile App-Hülle, bleibt aber von Audio-Engine, Klangfavoriten und Sitzungslogik getrennt. Der vorhandene Python-Reflexionsassistent wurde nicht verändert oder in das Repository kopiert. Automatisierte Tests prüfen gültige und beschädigte Speicherdaten, Speicherfehler, Begrenzungen sowie die vollständige UI-Bedienung.
+
+## Später: Integrationsphase 2 – optionaler ChatGPT-Dialog
+
+Erst nach eigener Architektur- und Datenschutzprüfung. Vorgesehen ist eine austauschbare Dialogschnittstelle; lokale Journaldaten werden nie automatisch übertragen. Eine mögliche Nutzung von „Sign in with ChatGPT“ muss die dann geltenden OpenAI-Vorgaben, geschützte Token-Speicherung, klare Einwilligung, Nutzungsgrenzen und einen sicheren iPhone-Betrieb erfüllen. Bis dahin bleibt Phase 2 vollständig außerhalb der App.

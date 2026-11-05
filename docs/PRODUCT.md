@@ -84,7 +84,6 @@ Auf ausdrücklichen Nutzerauftrag wird ein optionales, experimentelles Werkzeug 
 ## Weiterhin nicht im MVP
 - Therapeutische Tonprogramme oder Aussagen über eine therapeutische Wirksamkeit.
 - KI-Funktionen, Sprachmodelle, Backend, Benutzerkonto, Synchronisation, kostenpflichtige Abos.
-- Verbindung mit dem bestehenden Reflexionsassistenten.
 
 ## Beauftragte Erweiterung – mobile App-Navigation und Live-Klangbearbeitung
 
@@ -94,6 +93,16 @@ Auf ausdrücklichen Nutzerauftrag wird ein optionales, experimentelles Werkzeug 
 - Ansichtswechsel beeinflussen die Audio-Engine nicht. Pegel, Makros, Raum/Tape, Drone-Filter/LFO und Notch werden live aktualisiert.
 - Klangwechsel innerhalb einer laufenden Ebene verwenden parallele 180-ms-Crossfades: Die neue Quelle wird vorbereitet, während die alte weiterläuft, und erst danach wird die alte Node freigegeben.
 - Der sehr leise Vergleichston kann bewusst über einer laufenden Mischung gestartet werden; er erzwingt keinen Stop der Mischung und bleibt über den zentralen Stop abschaltbar.
+
+## Beauftragte Erweiterung – lokales Reflexionsmodul, Integrationsphase 1
+
+- Bliss erhält einen eigenen Bereich für freiwillige Reflexion neben den bestehenden Klangfunktionen.
+- Fünf ruhige Leitfragen und eine freie Notiz unterstützen kurze persönliche Einträge ohne Bewertung, Gamification oder therapeutische Aussage.
+- Ein optionaler Belastungswert von 0 bis 10 kann gemeinsam mit der Notiz gespeichert werden.
+- Einträge bleiben ausschließlich im lokalen Browser-Speicher, können einzeln nach Bestätigung gelöscht und als versionierte JSON-Datei exportiert werden.
+- Es gibt weiterhin keinen Chat, kein Sprachmodell, kein Konto, kein Backend und keine Cloud-Synchronisation.
+- Die Reflexionsdaten sind von Audio-Engine, Klangfavoriten und Sitzungszustand getrennt gekapselt.
+- Das bestehende Python-Projekt `personal-assistant` bleibt unverändert und wird weder als Repository noch als Datenbestand automatisch übernommen.
 
 ## Akzeptanzkriterien Phase 1
 - Mac Safari/Chrome und iOS Safari können Brown/Pink Noise per Benutzeraktion starten.
