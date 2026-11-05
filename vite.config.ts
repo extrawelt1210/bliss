@@ -1,5 +1,22 @@
-const CACHE = 'bliss-1793884138180';
-const PRECACHE = ["./","./index.html","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./assets/index-CUIpejqA.css","./assets/index-N7KynB7w.js","./assets/sound-processor-DA5MrrrU.js"];
+import { defineConfig } from 'vitest/config'
+import type { Plugin } from 'vite'
+import react from '@vitejs/plugin-react'
+
+const offlineServiceWorker = (): Plugin => ({
+  name: 'bliss-offline-service-worker',
+  apply: 'build',
+  generateBundle(_options, bundle) {
+    const files = [
+      './',
+      './index.html',
+      './manifest.webmanifest',
+      './icon.svg',
+      './icon-192.png',
+      './icon-512.png',
+      ...Object.keys(bundle).map((fileName) => `./${fileName}`),
+    ]
+    const source = `const CACHE = 'bliss-${Date.now()}';
+const PRECACHE = ${JSON.stringify(files)};
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
@@ -22,3 +39,17 @@ self.addEventListener('fetch', (event) => {
     return response;
   })));
 });
+`
+    this.emitFile({ type: 'asset', fileName: 'sw.js', source })
+  },
+})
+
+export default defineConfig({
+  base: './',
+  plugins: [react(), offlineServiceWorker()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    css: true,
+  },
+})

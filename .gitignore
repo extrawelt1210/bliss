@@ -1,0 +1,7 @@
+node_modules
+node_modules.nosync
+.pnpm-store
+dist
+.DS_Store
+*.local
+coverage
