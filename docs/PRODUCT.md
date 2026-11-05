@@ -86,6 +86,15 @@ Auf ausdrücklichen Nutzerauftrag wird ein optionales, experimentelles Werkzeug 
 - KI-Funktionen, Sprachmodelle, Backend, Benutzerkonto, Synchronisation, kostenpflichtige Abos.
 - Verbindung mit dem bestehenden Reflexionsassistenten.
 
+## Beauftragte Erweiterung – mobile App-Navigation und Live-Klangbearbeitung
+
+- Die Oberfläche ist für iPhone 11 bis iPhone 16 in fünf kurze Bereiche gegliedert: Heute, Klänge, Formen, Sitzung und Favoriten.
+- Die Startansicht beschränkt sich auf aktuelle Mischung, Schnellzugriff, Gesamtlautstärke und Wiedergabe. Eine feste untere Navigation ersetzt die frühere lange Einstellungsseite.
+- Der zentrale Stop bleibt in jedem Bereich erreichbar; Safe-Area-Abstände schützen Navigation und Stop vor Home-Indikator und Displayrändern.
+- Ansichtswechsel beeinflussen die Audio-Engine nicht. Pegel, Makros, Raum/Tape, Drone-Filter/LFO und Notch werden live aktualisiert.
+- Klangwechsel innerhalb einer laufenden Ebene verwenden parallele 180-ms-Crossfades: Die neue Quelle wird vorbereitet, während die alte weiterläuft, und erst danach wird die alte Node freigegeben.
+- Der sehr leise Vergleichston kann bewusst über einer laufenden Mischung gestartet werden; er erzwingt keinen Stop der Mischung und bleibt über den zentralen Stop abschaltbar.
+
 ## Akzeptanzkriterien Phase 1
 - Mac Safari/Chrome und iOS Safari können Brown/Pink Noise per Benutzeraktion starten.
 - Pause/Stop funktioniert reproduzierbar; keine hörbaren Klicks beim Wechsel.

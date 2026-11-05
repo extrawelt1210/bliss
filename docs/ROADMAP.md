@@ -54,5 +54,11 @@ Ein bewusst sehr leiser, manuell gestarteter Sinuston ermöglicht eine subjektiv
 
 Die Funktion wird ausdrücklich nicht als Messung, Diagnose oder Therapie bezeichnet. Hinweise grenzen sie auf gleichbleibende tonale Wahrnehmungen ein, fordern zum sehr leisen und kurzen Vergleich auf und benennen die ungesicherte Evidenz personalisierter Notch-Verfahren. Automatisierte Tests prüfen Frequenzabbildung, Begrenzung, Filterrouting, expliziten Start, Live-Regelung, Speicherung und Cleanup. Die subjektive Frequenzzuordnung, Hochfrequenzwiedergabe und Verträglichkeit müssen auf einem realen iPhone und mit den verwendeten Kopfhörern geprüft werden.
 
+## Phase 9 – mobile Navigation und unterbrechungsfreie Bearbeitung ✓
+
+Die bisherige lange Seite ist in fünf mobile Aufgabenbereiche gegliedert. Eine ruhige Startansicht bietet Wiedergabe und Schnellzugriff; Klangauswahl, Klangformung, Sitzungswerkzeuge und Favoriten sind getrennt erreichbar. Feste Navigation, zentraler Stop und Safe-Area-Abstände sind für die Breiten von iPhone 11 bis iPhone 16 ausgelegt.
+
+Klangparameter bleiben beim Wechsel zwischen Ansichten aktiv und werden ohne Neustart des AudioContext live übertragen. Ein Quellenwechsel verwendet einen parallelen Crossfade statt einer Fade-out-Lücke. Auch der sehr leise Vergleichston kann über einer laufenden Mischung gestartet werden. Automatisierte Tests prüfen Navigation, Live-Parameter, Crossfade-Routing, Cleanup und den unterbrechungsfreien Tuner-Start. Tatsächliche Touch-Ergonomie, Hardware-Lautstärke, thermische Stabilität und Hörwahrnehmung bleiben auf realen iPhones zu prüfen.
+
 ## Später: Reflexionsassistent
 Nur nach Architekturvergleich prüfen, ob Module gemeinsame Design-Komponenten oder lokale Datenmodelle nutzen sollten. Bis dahin strikt getrennte Projekte und Repositories.

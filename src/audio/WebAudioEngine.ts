@@ -468,28 +468,64 @@ export class WebAudioEngine implements AudioEngine {
 
     session.switching.add(layerId)
     try {
-      if (session.playing && layer.source) {
-        this.rampGain(layer.gain, session.context, 0, CHANGE_FADE_SECONDS)
-        await this.dependencies.delay(CHANGE_FADE_SECONDS * 1000)
-        if (!this.isCurrent(session, generation)) return
+      const previousSource = layer.source
+      const previousGain = layer.gain
+
+      if (!sound) {
+        if (session.playing && previousSource) {
+          this.rampGain(previousGain, session.context, 0, CHANGE_FADE_SECONDS)
+          await this.dependencies.delay(CHANGE_FADE_SECONDS * 1000)
+          if (!this.isCurrent(session, generation)) return
+        }
+        previousSource?.dispose()
+        layer.source = null
+        layer.sound = null
+        return
       }
 
-      layer.source?.dispose()
-      layer.source = null
-      layer.sound = null
-      if (!sound) return
-
+      // Build the replacement while the current source continues to play. Once it
+      // is ready, crossfade both paths in parallel so changing a sound never leaves
+      // the complete layer silent between two generators.
       const source = await this.createSource(session, sound, generation)
       if (!source || !this.isCurrent(session, generation)) {
         source?.dispose()
         return
       }
-      source.output.connect(layer.gain)
+
+      if (!previousSource || !session.playing) {
+        previousSource?.dispose()
+        source.output.connect(previousGain)
+        layer.source = source
+        layer.sound = { ...sound }
+        if (session.playing) {
+          this.rampGain(previousGain, session.context, layer.volume * LAYER_HEADROOM, CHANGE_FADE_SECONDS)
+        }
+        return
+      }
+
+      const replacementGain = session.context.createGain()
+      replacementGain.channelCount = 2
+      replacementGain.channelCountMode = 'explicit'
+      this.setGainImmediately(replacementGain, session.context, 0)
+      source.output.connect(replacementGain)
+      replacementGain.connect(session.effects.input)
+
+      this.rampGain(previousGain, session.context, 0, CHANGE_FADE_SECONDS)
+      this.rampGain(replacementGain, session.context, layer.volume * LAYER_HEADROOM, CHANGE_FADE_SECONDS)
+      await this.dependencies.delay(CHANGE_FADE_SECONDS * 1000)
+
+      if (!this.isCurrent(session, generation)) {
+        source.dispose()
+        replacementGain.disconnect()
+        return
+      }
+
+      previousSource.dispose()
+      previousGain.disconnect()
+      layer.gain = replacementGain
       layer.source = source
       layer.sound = { ...sound }
-      if (session.playing) {
-        this.rampGain(layer.gain, session.context, layer.volume * LAYER_HEADROOM, CHANGE_FADE_SECONDS)
-      }
+      this.rampGain(replacementGain, session.context, layer.volume * LAYER_HEADROOM, CHANGE_FADE_SECONDS)
     } finally {
       session.switching.delete(layerId)
     }

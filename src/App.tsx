@@ -56,6 +56,16 @@ const DEFAULT_SECONDARY_VOLUME = 35
 const TIMER_OPTIONS = [0, 5, 10, 20, 30] as const
 const QUICK_SLOTS = [1, 2, 3] as const
 
+type AppView = 'home' | 'sounds' | 'tools' | 'session' | 'favorites'
+
+const appViews: ReadonlyArray<{ id: AppView; label: string; icon: string }> = [
+  { id: 'home', label: 'Heute', icon: '⌂' },
+  { id: 'sounds', label: 'Klänge', icon: '≋' },
+  { id: 'tools', label: 'Formen', icon: '◌' },
+  { id: 'session', label: 'Sitzung', icon: '◷' },
+  { id: 'favorites', label: 'Favoriten', icon: '♡' },
+]
+
 const statusLabels: Record<PlaybackState, string> = {
   stopped: 'Bereit, wenn du es bist',
   playing: 'Klang läuft',
@@ -244,6 +254,7 @@ export function App({ engine: providedEngine }: AppProps) {
   const [favoriteName, setFavoriteName] = useState('')
   const [lastSetup, setLastSetup] = useState<SavedSetup | null>(initialSetup)
   const [compactMode, setCompactMode] = useState(false)
+  const [activeView, setActiveView] = useState<AppView>('home')
   const [busy, setBusy] = useState(false)
   const [stopping, setStopping] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -568,7 +579,6 @@ export function App({ engine: providedEngine }: AppProps) {
       setTunerPlaying(false)
       return
     }
-    if (playbackState !== 'stopped') await handleStop()
     try {
       await engine.startTunerTone(tinnitusSettings.frequency)
       setTunerPlaying(true)
@@ -737,6 +747,7 @@ export function App({ engine: providedEngine }: AppProps) {
   const toggleCompactMode = () => {
     const next = !compactMode
     setCompactMode(next)
+    if (!next) setActiveView('sounds')
     if (next) {
       void document.documentElement.requestFullscreen?.().catch(() => undefined)
     } else if (document.fullscreenElement) {
@@ -816,7 +827,7 @@ export function App({ engine: providedEngine }: AppProps) {
         </div>
       </header>
 
-      <main id="main" className="main-content">
+      <main id="main" className={`main-content view-${activeView}`}>
         {compactMode ? (
           <section className="compact-player" aria-labelledby="compact-heading">
             <p className="eyebrow">Nur das Wesentliche</p>
@@ -842,13 +853,37 @@ export function App({ engine: providedEngine }: AppProps) {
           </section>
         ) : (
           <>
-            <section className="intro" aria-labelledby="page-title">
-              <p className="eyebrow">Ein ruhiger Moment für dich</p>
-              <h1 id="page-title">Lass einen sanften Klang mitlaufen.</h1>
-              <p className="intro-copy">Wähle einen Klang oder kombiniere behutsam zwei Ebenen. Du kannst jederzeit stoppen.</p>
+            <section className="intro" aria-labelledby="page-title" hidden={activeView !== 'home'}>
+              <p className="eyebrow">Ein ruhiger Moment</p>
+              <h1 id="page-title">Was tut dir gerade gut?</h1>
+              <p className="intro-copy">Starte deine letzte Mischung oder nimm dir kurz Zeit für eine neue.</p>
             </section>
 
-            <section className="quick-access" aria-labelledby="quick-heading">
+            <section className="home-player" aria-labelledby="home-player-heading" hidden={activeView !== 'home'}>
+              <div className={`home-player__visual sound-orbit--${playbackState}`} aria-hidden="true">
+                <span className="home-player__halo" />
+                <span className="home-player__core"><i /><i /><i /></span>
+              </div>
+              <p className="section-kicker">Aktuelle Mischung</p>
+              <h2 id="home-player-heading">
+                {soundLabel(primarySound())}{secondaryEnabled ? ` + ${soundLabel(secondarySound())}` : ''}
+              </h2>
+              <p className="home-player__meta">
+                {phaseStatus ?? 'Freie Wiedergabe'}{remainingSeconds !== null ? ` · ${formatTimer(remainingSeconds)}` : ''}
+              </p>
+              {masterVolumeControl('home-volume')}
+              {(error || notice) && (
+                <div className={error ? 'error-message' : 'notice-message'} role={error ? 'alert' : 'status'}>
+                  {error ?? notice}
+                </div>
+              )}
+              {primaryAction('primary-action home-player__action')}
+              <button type="button" className="home-player__edit" onClick={() => setActiveView('sounds')}>
+                Mischung anpassen
+              </button>
+            </section>
+
+            <section className="quick-access" aria-labelledby="quick-heading" hidden={activeView !== 'home'}>
               <div>
                 <p className="section-kicker">Schnellzugriff</p>
                 <h2 id="quick-heading">Direkt in deine Mischung</h2>
@@ -870,8 +905,8 @@ export function App({ engine: providedEngine }: AppProps) {
               </div>
             </section>
 
-            <section className="sound-card" aria-labelledby="sound-heading">
-              <div className={`sound-orbit sound-orbit--${playbackState}`} aria-hidden="true">
+            <section className="sound-card" aria-labelledby="sound-heading" hidden={!['sounds', 'tools', 'session'].includes(activeView)}>
+              <div className={`sound-orbit sound-orbit--${playbackState}`} aria-hidden="true" hidden={activeView !== 'sounds'}>
                 <div className="sound-orbit__halo" />
                 <div className="sound-orbit__core">
                   <span className="wave wave--one" /><span className="wave wave--two" /><span className="wave wave--three" />
@@ -879,12 +914,12 @@ export function App({ engine: providedEngine }: AppProps) {
               </div>
 
               <div className="sound-card__content">
-                <div className="section-heading">
+                <div className="section-heading" hidden={activeView !== 'sounds'}>
                   <div><p className="section-kicker">Ebene 1</p><h2 id="sound-heading">Grundklang wählen</h2></div>
                   <span className="local-badge">Bleibt auf deinem Gerät</span>
                 </div>
 
-                <div className="noise-options" role="radiogroup" aria-label="Grundklang wählen">
+                <div className="noise-options" role="radiogroup" aria-label="Grundklang wählen" hidden={activeView !== 'sounds'}>
                   {SOUND_OPTIONS.map((option) => (
                     <label
                       className={`noise-option noise-option--${option.color}${primaryKind === option.kind ? ' is-selected' : ''}`}
@@ -907,15 +942,17 @@ export function App({ engine: providedEngine }: AppProps) {
                 </div>
 
                 {primaryKind === 'binaural' && (
-                  <BinauralSettings
-                    idPrefix="primary"
-                    difference={primaryDifference}
-                    disabled={busy}
-                    onChange={(difference) => handleDifferenceChange('primary', difference)}
-                  />
+                  <div hidden={activeView !== 'sounds'}>
+                    <BinauralSettings
+                      idPrefix="primary"
+                      difference={primaryDifference}
+                      disabled={busy}
+                      onChange={(difference) => handleDifferenceChange('primary', difference)}
+                    />
+                  </div>
                 )}
 
-                <div className="layer-volume">
+                <div className="layer-volume" hidden={activeView !== 'sounds'}>
                   <div><label htmlFor="primary-volume">Pegel Ebene 1</label><output>{primaryVolume} %</output></div>
                   <input
                     id="primary-volume"
@@ -928,7 +965,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   />
                 </div>
 
-                <section className="macro-panel" aria-labelledby="macro-heading">
+                <section className="macro-panel" aria-labelledby="macro-heading" hidden={activeView !== 'tools'}>
                   <div><p className="section-kicker">Klang-Makros</p><h3 id="macro-heading">Farbe behutsam formen</h3></div>
                   <p>Begrenzte Bereiche ohne Resonanzspitzen. Binaurale Sinustöne bleiben bewusst neutral.</p>
                   <div className="macro-grid">
@@ -951,7 +988,7 @@ export function App({ engine: providedEngine }: AppProps) {
                 </section>
 
                 {droneSelected && (
-                  <section className="drone-panel" aria-labelledby="drone-heading">
+                  <section className="drone-panel" aria-labelledby="drone-heading" hidden={activeView !== 'tools'}>
                     <div>
                       <p className="section-kicker">Warmer Drone</p>
                       <h3 id="drone-heading">Oszillatoren &amp; Multimode-Filter</h3>
@@ -1035,7 +1072,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   </section>
                 )}
 
-                <section className="effects-panel" aria-labelledby="effects-heading">
+                <section className="effects-panel" aria-labelledby="effects-heading" hidden={activeView !== 'tools'}>
                   <div><p className="section-kicker">Raum &amp; Wärme</p><h3 id="effects-heading">Sanft in den Raum setzen</h3></div>
                   <p>Ein kurzer diffuser Raum ohne Federhall-Charakter. Tape rundet Spitzen ab und komprimiert nur leicht.</p>
                   <div className="effect-grid">
@@ -1057,7 +1094,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   </div>
                 </section>
 
-                <section className="tinnitus-panel" aria-labelledby="tinnitus-heading">
+                <section className="tinnitus-panel" aria-labelledby="tinnitus-heading" hidden={activeView !== 'tools'}>
                   <div className="tinnitus-panel__heading">
                     <div>
                       <p className="section-kicker">Experimentelles Werkzeug</p>
@@ -1135,7 +1172,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   </p>
                 </section>
 
-                <section className="mixer-panel" aria-labelledby="mixer-heading">
+                <section className="mixer-panel" aria-labelledby="mixer-heading" hidden={activeView !== 'sounds'}>
                   <div className="mixer-panel__heading">
                     <div><p className="section-kicker">Klangmixer</p><h3 id="mixer-heading">Zweite Ebene</h3></div>
                     <label className="switch-control">
@@ -1187,7 +1224,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   )}
                 </section>
 
-                <section className="session-panel" aria-labelledby="session-heading">
+                <section className="session-panel" aria-labelledby="session-heading" hidden={activeView !== 'session'}>
                   <div className="session-panel__heading">
                     <div><p className="section-kicker">Sitzungsablauf</p><h3 id="session-heading">Ankommen, Klang, Ausblenden</h3></div>
                     <label className="switch-control">
@@ -1219,7 +1256,7 @@ export function App({ engine: providedEngine }: AppProps) {
                   )}
                 </section>
 
-                <section className="timer-control" aria-labelledby="timer-heading">
+                <section className="timer-control" aria-labelledby="timer-heading" hidden={activeView !== 'session'}>
                   <div><p className="section-kicker">Einfacher Timer</p><h3 id="timer-heading">Timer</h3></div>
                   <div className="timer-options" role="group" aria-label="Timer auswählen">
                     {TIMER_OPTIONS.map((minutes) => (
@@ -1250,7 +1287,7 @@ export function App({ engine: providedEngine }: AppProps) {
               </div>
             </section>
 
-            <section className="quiet-tools" aria-labelledby="quiet-heading">
+            <section className="quiet-tools" aria-labelledby="quiet-heading" hidden={activeView !== 'session'}>
               <div className="quiet-tools__heading">
                 <div><p className="section-kicker">Ruhemodus</p><h2 id="quiet-heading">Optional begleiten</h2></div>
                 <button type="button" className="secondary-action" onClick={() => setBreathingEnabled((enabled) => !enabled)} aria-pressed={breathingEnabled}>
@@ -1275,7 +1312,7 @@ export function App({ engine: providedEngine }: AppProps) {
               )}
             </section>
 
-            <section className="favorites" aria-labelledby="favorites-heading">
+            <section className="favorites" aria-labelledby="favorites-heading" hidden={activeView !== 'favorites'}>
               <div className="favorites__heading">
                 <div><p className="section-kicker">Auf diesem Gerät</p><h2 id="favorites-heading">Favoriten</h2></div>
                 <div className="favorite-transfer">
@@ -1310,18 +1347,38 @@ export function App({ engine: providedEngine }: AppProps) {
               )}
             </section>
 
-            <aside className="offline-note" aria-label="Offline und Installation">
+            <aside className="offline-note" aria-label="Offline und Installation" hidden={activeView !== 'favorites'}>
               <strong>Offline nutzbar nach dem ersten Laden.</strong>
               <span>Auf dem iPhone: Teilen → Zum Home-Bildschirm.</span>
             </aside>
 
-            <aside className="care-note" aria-label="Hinweis zum Hören">
+            <aside className="care-note" aria-label="Hinweis zum Hören" hidden={activeView !== 'favorites'}>
               <span className="care-note__icon" aria-hidden="true">i</span>
               <p><strong>Höre auf dein Gefühl.</strong> Der Klang soll begleiten, nicht alles überdecken. Bliss ersetzt keine medizinische Abklärung.</p>
             </aside>
           </>
         )}
       </main>
+
+      {!compactMode && (
+        <nav className="app-nav" aria-label="Hauptbereiche">
+          {appViews.map((view) => (
+            <button
+              type="button"
+              className={activeView === view.id ? 'is-active' : ''}
+              aria-current={activeView === view.id ? 'page' : undefined}
+              onClick={() => {
+                setActiveView(view.id)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              key={view.id}
+            >
+              <span aria-hidden="true">{view.icon}</span>
+              {view.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       <div className="stop-dock">
         <button

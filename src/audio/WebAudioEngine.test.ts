@@ -231,9 +231,9 @@ describe('WebAudioEngine', () => {
     expect(contexts[0].gains[2].gain.value).toBeCloseTo(0.7)
   })
 
-  it('wechselt nur die gewählte Ebene und lässt die andere Quelle bestehen', async () => {
+  it('überblendet nur die gewählte Ebene ohne stille Lücke und lässt die andere Quelle bestehen', async () => {
     const delay = vi.fn(async () => undefined)
-    const { engine, worklets } = createHarness({ delay })
+    const { engine, contexts, worklets } = createHarness({ delay })
     await engine.start({
       primary: { sound: { kind: 'brown' }, volume: 1 },
       secondary: { sound: { kind: 'sea' }, volume: 0.35 },
@@ -243,6 +243,11 @@ describe('WebAudioEngine', () => {
     expect(worklets[0].disconnect).not.toHaveBeenCalled()
     expect(worklets[1].disconnect).toHaveBeenCalledOnce()
     expect(worklets[2].port.close).not.toHaveBeenCalled()
+    expect(worklets[2].connect).toHaveBeenCalledWith(contexts[0].gains[6])
+    expect(contexts[0].gains[6].connect).toHaveBeenCalledWith(contexts[0].gains[3])
+    expect(contexts[0].gains[2].gain.value).toBe(0)
+    expect(contexts[0].gains[6].gain.value).toBeCloseTo(0.245)
+    expect(contexts[0].gains[2].disconnect).toHaveBeenCalledOnce()
     expect(delay).toHaveBeenCalledWith(180)
   })
 

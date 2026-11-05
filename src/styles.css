@@ -12,6 +12,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   min-width: 320px;
   min-height: 100%;
@@ -59,7 +63,7 @@ a:focus-visible {
   position: relative;
   min-height: 100vh;
   overflow: hidden;
-  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(12.5rem + env(safe-area-inset-bottom));
 }
 
 .ambient-glow {
@@ -199,6 +203,175 @@ a:focus-visible {
   z-index: 1;
   width: min(100% - 2rem, 62rem);
   margin: 0 auto;
+}
+
+/* Mobile App-Struktur: pro Ansicht nur eine klar umrissene Aufgabe. */
+.home-player {
+  display: none;
+}
+
+.view-home .home-player {
+  display: block;
+}
+
+.view-home .sound-card,
+.view-home .quiet-tools,
+.view-home .favorites,
+.view-home .offline-note,
+.view-home .care-note,
+.view-sounds .intro,
+.view-sounds .home-player,
+.view-sounds .quick-access,
+.view-sounds .macro-panel,
+.view-sounds .drone-panel,
+.view-sounds .effects-panel,
+.view-sounds .tinnitus-panel,
+.view-sounds .session-panel,
+.view-sounds .timer-control,
+.view-sounds .quiet-tools,
+.view-sounds .favorites,
+.view-sounds .offline-note,
+.view-sounds .care-note,
+.view-tools .intro,
+.view-tools .home-player,
+.view-tools .quick-access,
+.view-tools .sound-card .section-heading,
+.view-tools .sound-card .noise-options,
+.view-tools .sound-card .binaural-settings,
+.view-tools .sound-card__content > .layer-volume,
+.view-tools .sound-orbit,
+.view-tools .mixer-panel,
+.view-tools .session-panel,
+.view-tools .timer-control,
+.view-tools .quiet-tools,
+.view-tools .favorites,
+.view-tools .offline-note,
+.view-tools .care-note,
+.view-session .intro,
+.view-session .home-player,
+.view-session .quick-access,
+.view-session .sound-card .section-heading,
+.view-session .sound-card .noise-options,
+.view-session .sound-card .binaural-settings,
+.view-session .sound-card__content > .layer-volume,
+.view-session .sound-orbit,
+.view-session .macro-panel,
+.view-session .drone-panel,
+.view-session .effects-panel,
+.view-session .tinnitus-panel,
+.view-session .mixer-panel,
+.view-session .favorites,
+.view-session .offline-note,
+.view-session .care-note,
+.view-favorites .intro,
+.view-favorites .home-player,
+.view-favorites .quick-access,
+.view-favorites .sound-card,
+.view-favorites .quiet-tools {
+  display: none;
+}
+
+.view-tools .sound-card__content,
+.view-session .sound-card__content {
+  padding-top: 1rem;
+}
+
+.view-tools .sound-card,
+.view-session .sound-card {
+  padding-top: 0;
+}
+
+.view-tools .sound-card::before,
+.view-session .sound-card::before {
+  inset: 0;
+}
+
+.home-player {
+  position: relative;
+  margin: 0 auto 1rem;
+  padding: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(183, 213, 194, 0.11);
+  border-radius: 1.5rem;
+  background: linear-gradient(155deg, rgba(39, 58, 49, 0.9), rgba(16, 24, 20, 0.94));
+  box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.22);
+}
+
+.home-player h2 {
+  max-width: 14ch;
+  margin: 0;
+  color: #eef4ef;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.home-player__meta {
+  margin: 0.55rem 0 1.1rem;
+  color: #91a097;
+  font-size: 0.78rem;
+}
+
+.home-player .volume-control {
+  margin-top: 0;
+  background: rgba(4, 9, 7, 0.18);
+}
+
+.home-player__visual {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.1rem;
+  width: 4.6rem;
+  height: 4.6rem;
+}
+
+.home-player__halo,
+.home-player__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.home-player__halo {
+  border: 1px solid rgba(166, 210, 183, 0.14);
+  background: rgba(86, 136, 105, 0.07);
+}
+
+.home-player__core {
+  inset: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  background: linear-gradient(145deg, #466a55, #263d32);
+}
+
+.home-player__core i {
+  width: 2px;
+  height: 0.8rem;
+  border-radius: 999px;
+  background: #d9eee1;
+}
+
+.home-player__core i:nth-child(2) {
+  height: 1.3rem;
+}
+
+.sound-orbit--playing .home-player__halo {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.home-player__edit {
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.55rem;
+  border: 0;
+  color: #aebcb3;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.76rem;
 }
 
 .intro {
@@ -1652,15 +1825,63 @@ input[type="range"]::-moz-range-thumb {
 .stop-dock {
   position: fixed;
   right: 0;
-  bottom: 0;
+  bottom: calc(4.35rem + env(safe-area-inset-bottom));
   left: 0;
   z-index: 10;
-  padding: 0.85rem max(1rem, env(safe-area-inset-left)) calc(0.85rem + env(safe-area-inset-bottom))
+  padding: 0.6rem max(0.75rem, env(safe-area-inset-left))
     max(1rem, env(safe-area-inset-right));
   border-top: 1px solid rgba(224, 234, 226, 0.08);
   background: rgba(11, 16, 14, 0.88);
   box-shadow: 0 -1rem 3rem rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(18px);
+}
+
+.app-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 11;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-height: calc(4.35rem + env(safe-area-inset-bottom));
+  padding: 0.35rem max(0.35rem, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(0.35rem, env(safe-area-inset-left));
+  border-top: 1px solid rgba(224, 234, 226, 0.08);
+  background: rgba(10, 15, 13, 0.96);
+  backdrop-filter: blur(20px);
+}
+
+.app-nav button {
+  display: flex;
+  min-width: 0;
+  min-height: 3.65rem;
+  padding: 0.35rem 0.1rem 0.25rem;
+  border: 0;
+  border-radius: 0.75rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: #78857d;
+  background: transparent;
+  cursor: pointer;
+  font-size: clamp(0.57rem, 2.3vw, 0.68rem);
+}
+
+.app-nav button > span {
+  color: #8c9b92;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.app-nav button.is-active {
+  color: #c7dfcf;
+  background: rgba(101, 151, 120, 0.09);
+}
+
+.app-nav button.is-active > span {
+  color: #a9d3b8;
 }
 
 .stop-action {
@@ -1733,6 +1954,49 @@ input[type="range"]::-moz-range-thumb {
 }
 
 @media (max-width: 34rem) {
+  .main-content,
+  .topbar {
+    width: min(100% - 1rem, 32rem);
+  }
+
+  .intro {
+    margin: 1.25rem auto 1.3rem;
+    text-align: left;
+  }
+
+  .intro h1 {
+    margin-left: 0;
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .intro-copy {
+    margin-left: 0;
+  }
+
+  .view-sounds .sound-card,
+  .view-tools .sound-card,
+  .view-session .sound-card {
+    margin-top: 0.6rem;
+  }
+
+  .view-sounds .noise-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-sounds .noise-option {
+    min-height: 3.75rem;
+    padding: 0.6rem;
+  }
+
+  .view-sounds .noise-option__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .view-sounds .noise-option__text small {
+    display: none;
+  }
+
   .topbar {
     align-items: flex-start;
   }

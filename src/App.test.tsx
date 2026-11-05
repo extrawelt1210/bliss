@@ -23,6 +23,10 @@ const createEngine = (): AudioEngine => ({
   dispose: vi.fn().mockResolvedValue(undefined),
 })
 
+const openView = async (user: ReturnType<typeof userEvent.setup>, name: 'Klänge' | 'Formen' | 'Sitzung' | 'Favoriten') => {
+  await user.click(screen.getByRole('button', { name }))
+}
+
 describe('Bliss Bedienoberfläche', () => {
   beforeEach(() => {
     vi.useRealTimers()
@@ -49,6 +53,7 @@ describe('Bliss Bedienoberfläche', () => {
     const engine = createEngine()
     render(<App engine={engine} />)
 
+    await openView(user, 'Klänge')
     await user.click(screen.getByRole('checkbox', { name: 'Zweite Ebene aktivieren' }))
     await user.selectOptions(screen.getByLabelText('Klang für Ebene 2'), 'white')
     fireEvent.change(screen.getByRole('slider', { name: 'Pegel Ebene 1' }), { target: { value: '70' } })
@@ -66,6 +71,7 @@ describe('Bliss Bedienoberfläche', () => {
     const engine = createEngine()
     render(<App engine={engine} />)
 
+    await openView(user, 'Klänge')
     await user.click(screen.getByRole('button', { name: 'Starten' }))
     await user.click(screen.getByRole('radio', { name: /Rosa Rauschen/ }))
     expect(engine.setLayerSound).toHaveBeenCalledWith('primary', { kind: 'pink' })
@@ -79,6 +85,7 @@ describe('Bliss Bedienoberfläche', () => {
   it('reicht Master- und Ebenenpegel normalisiert weiter', () => {
     const engine = createEngine()
     render(<App engine={engine} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Klänge' }))
     fireEvent.change(screen.getByRole('slider', { name: 'Gesamtlautstärke' }), { target: { value: '24' } })
     fireEvent.change(screen.getByRole('slider', { name: 'Pegel Ebene 1' }), { target: { value: '60' } })
     expect(engine.setVolume).toHaveBeenLastCalledWith(0.24)
@@ -89,6 +96,7 @@ describe('Bliss Bedienoberfläche', () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Klänge')
     await user.click(screen.getByRole('radio', { name: /Binaurale Klänge/ }))
     await user.click(screen.getByRole('radio', { name: '4 Hz' }))
     expect(screen.getByText('Grundton: links 200 Hz · rechts 204 Hz')).toBeInTheDocument()
@@ -117,19 +125,21 @@ describe('Bliss Bedienoberfläche', () => {
     vi.useFakeTimers()
     const engine = createEngine()
     render(<App engine={engine} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Sitzung' }))
     fireEvent.click(screen.getByRole('button', { name: '5 Min.' }))
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Starten' })) })
-    expect(screen.getByText(/5:00/)).toBeInTheDocument()
+    expect(screen.getAllByText(/5:00/).length).toBeGreaterThan(0)
     await act(async () => { vi.advanceTimersByTime(300_000) })
     await act(async () => { await Promise.resolve() })
     expect(engine.stop).toHaveBeenCalled()
-    expect(screen.getByText('Der Timer ist ruhig ausgelaufen.')).toBeInTheDocument()
+    expect(screen.getAllByText('Der Timer ist ruhig ausgelaufen.').length).toBeGreaterThan(0)
   })
 
   it('zeigt die freiwillige Atembegleitung und Check-ins', async () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Sitzung')
     await user.click(screen.getByRole('button', { name: 'Atemkreis an' }))
     expect(screen.getByText('4 Sekunden ein · 6 Sekunden aus')).toBeInTheDocument()
     const voluntary = screen.getAllByRole('button', { name: 'Freiwillig eintragen' })
@@ -142,6 +152,7 @@ describe('Bliss Bedienoberfläche', () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Favoriten')
     await user.click(screen.getByRole('button', { name: 'Aktuelle Mischung speichern' }))
     expect(screen.getByRole('button', { name: 'Brown' })).toBeInTheDocument()
     expect(localStorage.getItem('bliss-favorites-v4')).toContain('brown')
@@ -149,10 +160,13 @@ describe('Bliss Bedienoberfläche', () => {
     expect(screen.getByText('Noch keine Favoriten gespeichert.')).toBeInTheDocument()
   })
 
-  it('formt lokal generierte Klänge mit sicheren Makros', () => {
+  it('formt lokal generierte Klänge mit sicheren Makros', async () => {
+    const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Klänge')
     expect(screen.getByRole('radio', { name: /Sanfter Regen/ })).toBeInTheDocument()
+    await openView(user, 'Formen')
     fireEvent.change(screen.getByRole('slider', { name: 'Wärme' }), { target: { value: '82' } })
     expect(engine.setSoundMacros).toHaveBeenLastCalledWith({
       warmth: 0.82,
@@ -162,9 +176,11 @@ describe('Bliss Bedienoberfläche', () => {
     })
   })
 
-  it('dosiert Raum und Tape während der Wiedergabe unabhängig', () => {
+  it('dosiert Raum und Tape während der Wiedergabe unabhängig', async () => {
+    const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Formen')
     fireEvent.change(screen.getByRole('slider', { name: 'Raumgefühl' }), { target: { value: '24' } })
     expect(engine.setSoundEffects).toHaveBeenLastCalledWith({ room: 0.24, tape: 0.14 })
     fireEvent.change(screen.getByRole('slider', { name: 'Tape-Sättigung' }), { target: { value: '20' } })
@@ -176,6 +192,7 @@ describe('Bliss Bedienoberfläche', () => {
     const engine = createEngine()
     render(<App engine={engine} />)
 
+    await openView(user, 'Formen')
     expect(engine.startTunerTone).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Vergleichston leise anhören' }))
     expect(engine.startTunerTone).toHaveBeenCalledWith(6_000)
@@ -195,7 +212,9 @@ describe('Bliss Bedienoberfläche', () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Klänge')
     await user.click(screen.getByRole('radio', { name: /Warmer Drone/ }))
+    await openView(user, 'Formen')
     expect(screen.getByRole('heading', { name: 'Oszillatoren & Multimode-Filter' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('radio', { name: 'BP – Bandpass' }))
@@ -221,6 +240,7 @@ describe('Bliss Bedienoberfläche', () => {
     vi.useFakeTimers()
     const engine = createEngine()
     render(<App engine={engine} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Sitzung' }))
     fireEvent.click(screen.getByRole('button', { name: '20 Min. ruhig' }))
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Starten' })) })
     expect(engine.start).toHaveBeenCalledWith({
@@ -237,6 +257,7 @@ describe('Bliss Bedienoberfläche', () => {
     vi.useFakeTimers()
     const engine = createEngine()
     render(<App engine={engine} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Sitzung' }))
     fireEvent.click(screen.getByRole('button', { name: '10 Min. sanft' }))
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Starten' })) })
     await act(async () => { vi.advanceTimersByTime(8 * 60_000) })
@@ -251,6 +272,7 @@ describe('Bliss Bedienoberfläche', () => {
     vi.useFakeTimers()
     const engine = createEngine()
     render(<App engine={engine} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Sitzung' }))
     fireEvent.click(screen.getByRole('button', { name: '10 Min. sanft' }))
     fireEvent.change(screen.getByLabelText('Minuten ankommen'), { target: { value: '0' } })
     fireEvent.change(screen.getByLabelText('Minuten Klangzeit'), { target: { value: '1' } })
@@ -267,12 +289,14 @@ describe('Bliss Bedienoberfläche', () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Favoriten')
     await user.type(screen.getByPlaceholderText('z. B. Abend am Meer'), 'Mein Abend')
     await user.click(screen.getByRole('button', { name: 'Aktuelle Mischung speichern' }))
     await user.click(screen.getByRole('button', { name: 'Mein Abend duplizieren' }))
     expect(screen.getByDisplayValue('Mein Abend Kopie')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Mein Abend Schnellplatz 1' }))
     expect(localStorage.getItem('bliss-favorites-v4')).toContain('"quickSlot":1')
+    await user.click(screen.getByRole('button', { name: 'Heute' }))
     expect(screen.getByRole('button', { name: /Schnellplatz 1.*Mein Abend/ })).toBeEnabled()
   })
 
@@ -294,8 +318,20 @@ describe('Bliss Bedienoberfläche', () => {
     await user.click(screen.getByRole('button', { name: 'Starten' }))
     const handler = vi.mocked(engine.setInterruptionHandler).mock.calls[0][0]
     act(() => handler?.())
-    expect(screen.getByText(/vom Gerät unterbrochen/)).toBeInTheDocument()
+    expect(screen.getAllByText(/vom Gerät unterbrochen/).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: 'Fortsetzen' })).toBeInTheDocument()
+  })
+
+  it('lässt den sehr leisen Vergleichston über einer laufenden Mischung starten', async () => {
+    const user = userEvent.setup()
+    const engine = createEngine()
+    render(<App engine={engine} />)
+    await user.click(screen.getByRole('button', { name: 'Starten' }))
+    await openView(user, 'Formen')
+    await user.click(screen.getByRole('button', { name: 'Vergleichston leise anhören' }))
+    expect(engine.stop).not.toHaveBeenCalled()
+    expect(engine.startTunerTone).toHaveBeenCalledWith(6_000)
+    expect(screen.getByRole('button', { name: 'Pausieren' })).toBeInTheDocument()
   })
 
   it('zeigt Audiofehler und lässt einen neuen Versuch zu', async () => {
@@ -326,6 +362,7 @@ describe('Bliss Bedienoberfläche', () => {
     const user = userEvent.setup()
     const engine = createEngine()
     render(<App engine={engine} />)
+    await openView(user, 'Klänge')
     screen.getByRole('radio', { name: /Braunes Rauschen/ }).focus()
     await user.keyboard('{ArrowRight}{ArrowRight}')
     expect(screen.getByRole('radio', { name: /Weißes Rauschen/ })).toBeChecked()
